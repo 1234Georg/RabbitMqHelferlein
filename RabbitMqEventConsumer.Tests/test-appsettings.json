@@ -1,0 +1,39 @@
+{
+  "JsonReplacement": {
+    "EnableReplacements": true,
+    "ShowOriginalMessage": true,
+    "ShowProcessedMessage": true,
+    "Rules": [
+      {
+        "JsonPath": "user.email",
+        "Placeholder": "[EMAIL_REDACTED]",
+        "Enabled": true,
+        "Description": "Replace email addresses with placeholder"
+      },
+      {
+        "JsonPath": "user.phone",
+        "Placeholder": "[PHONE_REDACTED]",
+        "Enabled": true,
+        "Description": "Replace phone numbers with placeholder"
+      },
+      {
+        "JsonPath": "credentials.password",
+        "Placeholder": "[PASSWORD_REDACTED]",
+        "Enabled": true,
+        "Description": "Replace passwords with placeholder"
+      },
+      {
+        "JsonPath": "personalInfo.ssn",
+        "Placeholder": "[SSN_REDACTED]",
+        "Enabled": true,
+        "Description": "Replace social security numbers"
+      },
+      {
+        "JsonPath": "users[0].email",
+        "Placeholder": "[FIRST_USER_EMAIL_REDACTED]",
+        "Enabled": false,
+        "Description": "Example of array access (disabled by default)"
+      }
+    ]
+  }
+}

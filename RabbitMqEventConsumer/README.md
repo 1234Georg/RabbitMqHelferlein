@@ -333,3 +333,27 @@ The application stores each consumed event as a `ConsumedEvent` object containin
 ## License
 
 This project is open source and available under the MIT License.
+
+## Testing
+
+The project includes comprehensive unit tests for the JsonReplacementService:
+
+```bash
+# Run all tests
+cd RabbitMqEventConsumer.Tests
+dotnet test
+
+# Run with detailed output
+dotnet test --logger "console;verbosity=detailed"
+```
+
+### Test Coverage
+
+- **30 Unit Tests** covering all public methods
+- **JsonReplacementService** - Core functionality with 27 tests
+- **Configuration Classes** - 3 tests for config models
+- **Edge Cases** - Invalid JSON, malformed paths, array bounds
+- **Performance** - Deep nesting and large JSON handling
+- **Multiple Scenarios** - All supported JSONPath patterns
+
+See `RabbitMqEventConsumer.Tests/README.md` for detailed test documentation.
