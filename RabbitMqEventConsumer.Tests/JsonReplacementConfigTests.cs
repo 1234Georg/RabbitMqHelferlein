@@ -2,6 +2,53 @@ using FluentAssertions;
 using RabbitMqEventConsumer;
 
 namespace RabbitMqEventConsumer.Tests;
+public class RabbitMqConfigTests
+{
+    [Fact]
+    public void RabbitMqConfig_ShouldHaveDefaultValues()
+    {
+        // Act
+        var config = new RabbitMqConfig();
+
+        // Assert
+        config.Enabled.Should().BeTrue();
+        config.HostName.Should().Be("localhost");
+        config.Port.Should().Be(5672);
+        config.Username.Should().Be("guest");
+        config.Password.Should().Be("guest");
+        config.QueueName.Should().Be("events_queue");
+        config.VirtualHost.Should().Be("/");
+        config.AutoAck.Should().BeFalse();
+        config.Durable.Should().BeTrue();
+        config.Exclusive.Should().BeFalse();
+        config.AutoDelete.Should().BeFalse();
+    }
+
+    [Fact]
+    public void RabbitMqConfig_ShouldAllowDisabling()
+    {
+        // Arrange
+        var config = new RabbitMqConfig();
+
+        // Act
+        config.Enabled = false;
+
+        // Assert
+        config.Enabled.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RabbitMqConfig_ShouldSupportEnabledProperty(bool enabled)
+    {
+        // Arrange & Act
+        var config = new RabbitMqConfig { Enabled = enabled };
+
+        // Assert
+        config.Enabled.Should().Be(enabled);
+    }
+}
 
 public class JsonReplacementConfigTests
 {

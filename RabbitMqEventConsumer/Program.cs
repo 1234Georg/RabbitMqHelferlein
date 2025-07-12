@@ -60,8 +60,12 @@ public class Program
         
         _replacementService = new JsonReplacementService(_jsonReplacementConfig);
 
-        Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqConfig.HostName}:{rabbitMqConfig.Port}");
-        Console.WriteLine($"Queue: {rabbitMqConfig.QueueName}");
+        Console.WriteLine($"RabbitMQ: {(rabbitMqConfig.Enabled ? "✅ Enabled" : "❌ Disabled (Offline Mode)")}");
+        if (rabbitMqConfig.Enabled)
+        {
+            Console.WriteLine($"Server: {rabbitMqConfig.HostName}:{rabbitMqConfig.Port}");
+            Console.WriteLine($"Queue: {rabbitMqConfig.QueueName}");
+        }
         
         if (_jsonReplacementConfig.EnableReplacements)
         {
@@ -74,7 +78,9 @@ public class Program
         }
         Console.WriteLine();
 
-        var factory = new ConnectionFactory
+        if (rabbitMqConfig.Enabled)
+        {
+            var factory = new ConnectionFactory
         {
             HostName = rabbitMqConfig.HostName,
             Port = rabbitMqConfig.Port,
@@ -240,6 +246,17 @@ public class Program
             Console.WriteLine();
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
+        }
+        }
+        else
+        {
+            // Offline mode - only interactive commands available
+            Console.WriteLine("Running in offline mode - only interactive commands available.");
+            Console.WriteLine("Use keyboard commands to test JSON replacement rules and JMeter template generation.");
+            Console.WriteLine();
+            
+            // Handle user input
+            await HandleUserInput();
         }
     }
 
