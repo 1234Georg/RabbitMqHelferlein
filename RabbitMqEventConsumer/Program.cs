@@ -281,7 +281,7 @@ public class Program
                     ShowReplacementRules();
                     break;
                 case 'J':
-                    GenerateJMeterTemplate();
+                    JMXGenerator.GenerateJMeterTemplate(ConsumedEvents, EventsLock);
                     break;
                 case '\r': // Enter key
                 case '\n':
@@ -598,69 +598,5 @@ public class Program
         content = content.Trim();
         return (content.StartsWith("{") && content.EndsWith("}")) || 
                (content.StartsWith("[") && content.EndsWith("]"));
-    }
-    private static void GenerateJMeterTemplate()
-    {
-        Console.WriteLine();
-        Console.WriteLine("🚀 JMeter Template Generator:");
-        Console.WriteLine();
-        
-        try
-        {
-            // Get the template from the embedded JMeterTemplate.jmx file
-            var templatePath = "JMeterTemplate.jmx";
-            
-            if (!File.Exists(templatePath))
-            {
-                Console.WriteLine($"❌ Template file not found: {templatePath}");
-                Console.WriteLine($"   Make sure JMeterTemplate.jmx exists in the application directory.");
-                Console.WriteLine($"   {new string('─', 60)}");
-                Console.WriteLine();
-                return;
-            }
-
-            var templateContent = File.ReadAllText(templatePath);
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-            var outputFileName = $"Generated_JMeter_Test_{timestamp}.jmx";
-            
-            // Write the template to a new file
-            File.WriteAllText(outputFileName, templateContent);
-            
-            Console.WriteLine($"✅ JMeter template generated successfully!");
-            Console.WriteLine($"   File: {outputFileName}");
-            Console.WriteLine($"   Size: {new FileInfo(outputFileName).Length} bytes");
-            Console.WriteLine();
-            Console.WriteLine($"📝 Template Features:");
-            Console.WriteLine($"   • OAuth authentication with Keycloak");
-            Console.WriteLine($"   • Parameterized server configuration");
-            Console.WriteLine($"   • Test data variables (FallId, PatientId, etc.)");
-            Console.WriteLine($"   • HTTP samplers for API testing");
-            Console.WriteLine($"   • JSON path assertions");
-            Console.WriteLine($"   • Response validation");
-            Console.WriteLine();
-            Console.WriteLine($"🔧 Usage:");
-            Console.WriteLine($"   1. Open {outputFileName} in Apache JMeter");
-            Console.WriteLine($"   2. Configure the User Defined Variables:");
-            Console.WriteLine($"      - Server: Target server hostname");
-            Console.WriteLine($"      - Protocol: http or https");
-            Console.WriteLine($"      - Port: Server port number");
-            Console.WriteLine($"      - IdpServer: Keycloak server hostname");
-            Console.WriteLine($"      - OAuthUsername/OAuthPassword: Test credentials");
-            Console.WriteLine($"   3. Add your specific HTTP requests in the placeholder section");
-            Console.WriteLine($"   4. Run the test plan");
-            Console.WriteLine();
-            Console.WriteLine($"💡 Tips:");
-            Console.WriteLine($"   • Use JMeter variables like ${{FallId}} for dynamic data");
-            Console.WriteLine($"   • Configure thread groups for load testing");
-            Console.WriteLine($"   • Add listeners for result visualization");
-            Console.WriteLine($"   • Use CSV Data Set Config for external test data");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Error generating JMeter template: {ex.Message}");
-        }
-        
-        Console.WriteLine($"   {new string('─', 60)}");
-        Console.WriteLine();
     }
 }
