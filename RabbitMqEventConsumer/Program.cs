@@ -9,6 +9,8 @@ public class Program
 {
     private static readonly List<ConsumedEvent> ConsumedEvents = new();
     private static readonly object EventsLock = new();
+    private static JsonReplacementService? _replacementService;
+    private static JsonReplacementConfig? _jsonReplacementConfig;
 
     static async Task Main(string[] args)
     {
@@ -26,11 +28,20 @@ public class Program
             return;
         }
 
-        Console.WriteLine("RabbitMQ Event Consumer Starting...");
+        // Check if user wants to analyze JSON paths
+        if (args.Length > 0 && args[0] == "analyze" && args.Length > 1)
+        {
+            AnalyzeJsonPaths(args[1]);
+            return;
+        }
+
+        Console.WriteLine("RabbitMQ Event Consumer with JSON Replacement");
+        Console.WriteLine("═════════════════════════════════════════════");
         Console.WriteLine("Commands:");
         Console.WriteLine("  - Press [S] to show statistics");
         Console.WriteLine("  - Press [H] to show event history");
         Console.WriteLine("  - Press [C] to clear event history");
+        Console.WriteLine("  - Press [R] to show replacement rules");
         Console.WriteLine("  - Press [ENTER] to exit");
         Console.WriteLine();
 
@@ -43,8 +54,23 @@ public class Program
         var rabbitMqConfig = new RabbitMqConfig();
         configuration.GetSection("RabbitMq").Bind(rabbitMqConfig);
 
+        _jsonReplacementConfig = new JsonReplacementConfig();
+        configuration.GetSection("JsonReplacement").Bind(_jsonReplacementConfig);
+        
+        _replacementService = new JsonReplacementService(_jsonReplacementConfig);
+
         Console.WriteLine($"Connecting to RabbitMQ at {rabbitMqConfig.HostName}:{rabbitMqConfig.Port}");
         Console.WriteLine($"Queue: {rabbitMqConfig.QueueName}");
+        
+        if (_jsonReplacementConfig.EnableReplacements)
+        {
+            var enabledRules = _jsonReplacementConfig.Rules.Count(r => r.Enabled);
+            Console.WriteLine($"JSON Replacements: ✅ Enabled ({enabledRules} active rules)");
+        }
+        else
+        {
+            Console.WriteLine($"JSON Replacements: ❌ Disabled");
+        }
         Console.WriteLine();
 
         var factory = new ConnectionFactory
@@ -96,6 +122,18 @@ public class Program
                     consumedEvent.MessageSize = body.Length;
                     consumedEvent.IsJson = IsJsonContent(message);
 
+                    // Process JSON replacements if enabled and message is JSON
+                    if (consumedEvent.IsJson && _replacementService != null)
+                    {
+                        var (processedMessage, appliedRules) = _replacementService.ProcessMessage(message, consumedEvent.IsJson);
+                        if (appliedRules.Any())
+                        {
+                            consumedEvent.ProcessedMessage = processedMessage;
+                            consumedEvent.HasReplacements = true;
+                            consumedEvent.AppliedReplacements.AddRange(appliedRules);
+                        }
+                    }
+
                     // Extract properties
                     if (eventArgs.BasicProperties != null)
                     {
@@ -130,9 +168,9 @@ public class Program
                         ConsumedEvents.Add(consumedEvent);
                         
                         // Limit stored events to prevent memory issues (keep last 1000)
-                        if (ConsumedEvents.Count > 10000)
+                        if (ConsumedEvents.Count > 1000)
                         {
-                            throw new Exception("Limit reached")
+                            ConsumedEvents.RemoveAt(0);
                         }
                     }
 
@@ -221,6 +259,9 @@ public class Program
                 case 'C':
                     ClearEventHistory();
                     break;
+                case 'R':
+                    ShowReplacementRules();
+                    break;
                 case '\r': // Enter key
                 case '\n':
                     return;
@@ -240,26 +281,34 @@ public class Program
         Console.WriteLine($"   Routing Key: {eventData.RoutingKey}");
         Console.WriteLine($"   Delivery Tag: {eventData.DeliveryTag}");
         Console.WriteLine($"   Message Size: {eventData.MessageSize} bytes");
-        Console.WriteLine($"   Content:");
         
-        // Pretty print message with indentation
-        if (eventData.IsJson)
+        // Show replacement information if any
+        if (eventData.HasReplacements)
         {
-            try
+            Console.WriteLine($"   🔄 JSON Replacements Applied: {eventData.AppliedReplacements.Count}");
+            foreach (var replacement in eventData.AppliedReplacements)
             {
-                var formatted = System.Text.Json.JsonSerializer.Serialize(
-                    System.Text.Json.JsonSerializer.Deserialize<object>(eventData.Message),
-                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                Console.WriteLine($"     {formatted.Replace("\n", "\n     ")}");
-            }
-            catch
-            {
-                Console.WriteLine($"     {eventData.Message}");
+                Console.WriteLine($"      • {replacement}");
             }
         }
-        else
+        
+        // Display original message if configured
+        if (_jsonReplacementConfig?.ShowOriginalMessage == true)
         {
-            Console.WriteLine($"     {eventData.Message}");
+            Console.WriteLine($"   Original Content:");
+            DisplayJsonContent(eventData.Message, eventData.IsJson, "     ");
+        }
+        
+        // Display processed message if configured and replacements were applied
+        if (eventData.HasReplacements && _jsonReplacementConfig?.ShowProcessedMessage == true)
+        {
+            Console.WriteLine($"   Processed Content:");
+            DisplayJsonContent(eventData.ProcessedMessage!, true, "     ");
+        }
+        else if (!eventData.HasReplacements)
+        {
+            Console.WriteLine($"   Content:");
+            DisplayJsonContent(eventData.Message, eventData.IsJson, "     ");
         }
         
         // Print message properties
@@ -286,6 +335,77 @@ public class Program
         Console.WriteLine();
     }
 
+    private static void DisplayJsonContent(string content, bool isJson, string indent)
+    {
+        if (isJson)
+        {
+            try
+            {
+                var formatted = System.Text.Json.JsonSerializer.Serialize(
+                    System.Text.Json.JsonSerializer.Deserialize<object>(content),
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                Console.WriteLine($"{indent}{formatted.Replace("\n", $"\n{indent}")}");
+            }
+            catch
+            {
+                Console.WriteLine($"{indent}{content}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"{indent}{content}");
+        }
+    }
+
+    private static void ShowReplacementRules()
+    {
+        Console.WriteLine();
+        Console.WriteLine("🔄 JSON Replacement Rules:");
+        
+        if (_jsonReplacementConfig == null)
+        {
+            Console.WriteLine("   No configuration loaded.");
+            Console.WriteLine($"   {new string('─', 60)}");
+            Console.WriteLine();
+            return;
+        }
+        
+        Console.WriteLine($"   Status: {(_jsonReplacementConfig.EnableReplacements ? "✅ Enabled" : "❌ Disabled")}");
+        Console.WriteLine($"   Show Original: {(_jsonReplacementConfig.ShowOriginalMessage ? "✅ Yes" : "❌ No")}");
+        Console.WriteLine($"   Show Processed: {(_jsonReplacementConfig.ShowProcessedMessage ? "✅ Yes" : "❌ No")}");
+        Console.WriteLine();
+        
+        if (!_jsonReplacementConfig.Rules.Any())
+        {
+            Console.WriteLine("   No rules configured.");
+        }
+        else
+        {
+            Console.WriteLine("   Rules:");
+            for (int i = 0; i < _jsonReplacementConfig.Rules.Count; i++)
+            {
+                var rule = _jsonReplacementConfig.Rules[i];
+                var status = rule.Enabled ? "✅" : "❌";
+                Console.WriteLine($"   {i + 1}. {status} {rule.JsonPath} → {rule.Placeholder}");
+                
+                if (!string.IsNullOrEmpty(rule.Description))
+                {
+                    Console.WriteLine($"      Description: {rule.Description}");
+                }
+            }
+        }
+        
+        lock (EventsLock)
+        {
+            var eventsWithReplacements = ConsumedEvents.Count(e => e.HasReplacements);
+            Console.WriteLine();
+            Console.WriteLine($"   Applied in Session: {eventsWithReplacements} of {ConsumedEvents.Count} events");
+        }
+        
+        Console.WriteLine($"   {new string('─', 60)}");
+        Console.WriteLine();
+    }
+
     private static void ShowStatistics()
     {
         lock (EventsLock)
@@ -300,11 +420,13 @@ public class Program
                 var failed = ConsumedEvents.Count(e => !e.ProcessedSuccessfully);
                 var jsonEvents = ConsumedEvents.Count(e => e.IsJson);
                 var textEvents = ConsumedEvents.Count(e => !e.IsJson);
+                var eventsWithReplacements = ConsumedEvents.Count(e => e.HasReplacements);
                 
                 Console.WriteLine($"   Successful: {successful}");
                 Console.WriteLine($"   Failed: {failed}");
                 Console.WriteLine($"   JSON Events: {jsonEvents}");
                 Console.WriteLine($"   Text Events: {textEvents}");
+                Console.WriteLine($"   Events with Replacements: {eventsWithReplacements}");
                 
                 var firstEvent = ConsumedEvents.First().Timestamp;
                 var lastEvent = ConsumedEvents.Last().Timestamp;
@@ -363,14 +485,20 @@ public class Program
                 var index = ConsumedEvents.IndexOf(eventData) + 1;
                 var status = eventData.ProcessedSuccessfully ? "✅" : "❌";
                 var contentType = eventData.IsJson ? "JSON" : "TEXT";
+                var replacementIcon = eventData.HasReplacements ? "🔄" : "";
                 
-                Console.WriteLine($"   #{index} {status} [{eventData.Timestamp:HH:mm:ss.fff}] {contentType} - {eventData.MessageSize} bytes");
+                Console.WriteLine($"   #{index} {status}{replacementIcon} [{eventData.Timestamp:HH:mm:ss.fff}] {contentType} - {eventData.MessageSize} bytes");
                 
                 // Show first 50 chars of message
                 var preview = eventData.Message.Length > 50 
                     ? eventData.Message[..50] + "..." 
                     : eventData.Message;
                 Console.WriteLine($"      Preview: {preview.Replace('\n', ' ').Replace('\r', ' ')}");
+                
+                if (eventData.HasReplacements)
+                {
+                    Console.WriteLine($"      Replacements: {eventData.AppliedReplacements.Count} applied");
+                }
                 
                 if (!eventData.ProcessedSuccessfully)
                 {
@@ -406,6 +534,39 @@ public class Program
         Console.WriteLine();
         Console.WriteLine("📈 Final Session Statistics:");
         ShowStatistics();
+    }
+
+    private static void AnalyzeJsonPaths(string jsonContent)
+    {
+        Console.WriteLine("🔍 JSON Path Analysis:");
+        Console.WriteLine($"Analyzing: {jsonContent}");
+        Console.WriteLine();
+        
+        var paths = JsonReplacementService.ExtractJsonPaths(jsonContent);
+        
+        if (!paths.Any())
+        {
+            Console.WriteLine("No JSON paths found. Make sure the input is valid JSON.");
+            return;
+        }
+        
+        Console.WriteLine($"Found {paths.Count} JSON paths:");
+        for (int i = 0; i < paths.Count; i++)
+        {
+            Console.WriteLine($"  {i + 1}. {paths[i]}");
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine("Usage examples for appsettings.json:");
+        foreach (var path in paths.Take(5)) // Show first 5 as examples
+        {
+            Console.WriteLine($"  {{");
+            Console.WriteLine($"    \"JsonPath\": \"{path}\",");
+            Console.WriteLine($"    \"Placeholder\": \"{{{path.Replace(".", "_").Replace("[", "_").Replace("]", "")}}}\",");
+            Console.WriteLine($"    \"Enabled\": true,");
+            Console.WriteLine($"    \"Description\": \"Replace {path} with placeholder\"");
+            Console.WriteLine($"  }}");
+        }
     }
 
     private static bool IsJsonContent(string content)

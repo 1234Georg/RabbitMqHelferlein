@@ -7,6 +7,8 @@ public class ConsumedEvent
     public string RoutingKey { get; set; } = string.Empty;
     public ulong DeliveryTag { get; set; }
     public string Message { get; set; } = string.Empty;
+    public string? ProcessedMessage { get; set; }
+    public bool HasReplacements { get; set; } = false;
     public int MessageSize { get; set; }
     public string? ContentType { get; set; }
     public string? MessageId { get; set; }
@@ -16,4 +18,5 @@ public class ConsumedEvent
     public bool IsJson { get; set; }
     public bool ProcessedSuccessfully { get; set; } = true;
     public string? ErrorMessage { get; set; }
+    public List<string> AppliedReplacements { get; set; } = new();
 }

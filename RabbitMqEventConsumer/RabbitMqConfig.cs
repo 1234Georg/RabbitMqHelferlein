@@ -13,3 +13,19 @@ public class RabbitMqConfig
     public bool Exclusive { get; set; } = false;
     public bool AutoDelete { get; set; } = false;
 }
+
+public class JsonReplacementRule
+{
+    public string JsonPath { get; set; } = string.Empty;
+    public string Placeholder { get; set; } = string.Empty;
+    public bool Enabled { get; set; } = true;
+    public string Description { get; set; } = string.Empty;
+}
+
+public class JsonReplacementConfig
+{
+    public bool EnableReplacements { get; set; } = false;
+    public bool ShowOriginalMessage { get; set; } = true;
+    public bool ShowProcessedMessage { get; set; } = true;
+    public List<JsonReplacementRule> Rules { get; set; } = new();
+}
