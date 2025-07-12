@@ -155,6 +155,7 @@ While the consumer is running, you can use these keyboard commands:
 - **H** - Show event history (last 10 events)
 - **C** - Clear event history from memory
 - **R** - Show JSON replacement rules and status
+- **J** - Generate JMeter template for load testing
 - **ENTER** - Exit the application
 
 ### Publishing Test Events
@@ -296,6 +297,55 @@ This will extract all possible JSONPaths and show example replacement rule confi
   "Description": "Replace real emails with test placeholders"
 }
 ```
+
+### JMeter Template Generation (Press 'J')
+
+The application includes a built-in JMeter template generator that creates ready-to-use load testing configurations:
+
+```
+🚀 JMeter Template Generator:
+
+✅ JMeter template generated successfully!
+   File: Generated_JMeter_Test_2025-07-12_10-45-30.jmx
+   Size: 15626 bytes
+
+📝 Template Features:
+   • OAuth authentication with Keycloak
+   • Parameterized server configuration
+   • Test data variables (FallId, PatientId, etc.)
+   • HTTP samplers for API testing
+   • JSON path assertions
+   • Response validation
+
+🔧 Usage:
+   1. Open Generated_JMeter_Test_*.jmx in Apache JMeter
+   2. Configure the User Defined Variables:
+      - Server: Target server hostname
+      - Protocol: http or https
+      - Port: Server port number
+      - IdpServer: Keycloak server hostname
+      - OAuthUsername/OAuthPassword: Test credentials
+   3. Add your specific HTTP requests in the placeholder section
+   4. Run the test plan
+
+💡 Tips:
+   • Use JMeter variables like ${FallId} for dynamic data
+   • Configure thread groups for load testing
+   • Add listeners for result visualization
+   • Use CSV Data Set Config for external test data
+────────────────────────────────────────────────────────────
+```
+
+#### JMeter Template Features
+
+- **OAuth 2.0 Authentication**: Pre-configured Keycloak integration
+- **Parameterized Configuration**: Variables for easy environment switching
+- **Dynamic Test Data**: Random generation of test IDs and values
+- **HTTP Samplers**: Basic API request structure
+- **Response Assertions**: JSON path validation examples
+- **Modular Design**: Include controllers for reusable components
+
+The generated template provides a solid foundation for API load testing with proper authentication and data handling.
 
 ## Event Storage
 

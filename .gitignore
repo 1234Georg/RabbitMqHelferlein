@@ -135,3 +135,4 @@ test-results/
 *.7z
 *.tar
 *.gz
+*.jmx
