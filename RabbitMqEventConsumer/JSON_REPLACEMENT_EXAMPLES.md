@@ -246,12 +246,7 @@ This file contains example JSON messages and corresponding replacement rules to 
 
 ## Quick Commands to Test
 
-### 1. Analyze JSONPaths in a message:
-```bash
-dotnet run analyze '{"user":{"id":123,"email":"test@example.com"},"orders":[{"id":1,"total":99.99}]}'
-```
-
-### 2. Publish test events and see replacements in action:
+### 1. Publish test events and see replacements in action:
 ```bash
 dotnet run publish
 ```
@@ -260,7 +255,7 @@ Then in another terminal:
 dotnet run
 ```
 
-### 3. Show replacement rules while running:
+### 1. Show replacement rules while running:
 Press `R` key while the consumer is running to see active rules and statistics.
 
 ## JSONPath Patterns Supported

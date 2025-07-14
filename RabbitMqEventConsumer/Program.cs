@@ -21,20 +21,6 @@ public class Program
             return;
         }
 
-        // Check if user wants to show event history
-        if (args.Length > 0 && args[0] == "history")
-        {
-            ShowEventHistory();
-            return;
-        }
-
-        // Check if user wants to analyze JSON paths
-        if (args.Length > 0 && args[0] == "analyze" && args.Length > 1)
-        {
-            AnalyzeJsonPaths(args[1]);
-            return;
-        }
-
         Console.WriteLine("RabbitMQ Event Consumer with JSON Replacement");
         Console.WriteLine("═════════════════════════════════════════════");
         Console.WriteLine("Commands:");

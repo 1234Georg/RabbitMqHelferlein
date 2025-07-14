@@ -7,7 +7,7 @@ echo.
 echo Options:
 echo   1. Start Consumer (with event storage)
 echo   2. Publish Test Events
-echo   3. Show Event History
+echo   3. ---
 echo   4. Exit
 echo.
 set /p choice="Enter your choice (1-4): "
@@ -16,13 +16,6 @@ if "%choice%"=="2" (
     echo.
     echo Publishing test events...
     dotnet run publish
-    goto end
-)
-
-if "%choice%"=="3" (
-    echo.
-    echo Showing event history...
-    dotnet run history
     goto end
 )
 

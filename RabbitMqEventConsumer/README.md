@@ -168,16 +168,6 @@ dotnet run publish
 
 This will publish several test events to the queue, which the consumer can then process and apply replacements.
 
-### Analyze JSON Paths
-
-To discover available JSONPaths in a JSON message:
-
-```bash
-dotnet run analyze '{"user":{"id":123,"profile":{"email":"test@example.com"}}}'
-```
-
-This will extract all possible JSONPaths and show example replacement rule configurations.
-
 ## Example Output
 
 ### Event Display with Replacements

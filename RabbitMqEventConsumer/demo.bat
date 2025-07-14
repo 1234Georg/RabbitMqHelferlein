@@ -28,8 +28,5 @@ echo.
 echo The consumer stores all events in memory for analysis.
 echo Events include timestamps, message content, headers, and processing status.
 echo.
-echo To see the stored events without starting the consumer:
-echo   dotnet run history
-echo.
 echo Press any key to exit...
 pause > nul
