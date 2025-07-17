@@ -161,9 +161,9 @@ public class Program
                         ConsumedEvents.Add(consumedEvent);
                         
                         // Limit stored events to prevent memory issues (keep last 1000)
-                        if (ConsumedEvents.Count > 1000)
+                        if (ConsumedEvents.Count > 10000)
                         {
-                            ConsumedEvents.RemoveAt(0);
+                            throw new Exception("more that 1000 Events");
                         }
                     }
 
@@ -186,9 +186,9 @@ public class Program
                     {
                         ConsumedEvents.Add(consumedEvent);
                         
-                        if (ConsumedEvents.Count > 1000)
+                        if (ConsumedEvents.Count > 10000)
                         {
-                            ConsumedEvents.RemoveAt(0);
+                            throw new Exception("more that 1000 Events");
                         }
                     }
 

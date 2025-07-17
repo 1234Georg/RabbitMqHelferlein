@@ -1,16 +1,15 @@
 # RabbitMQ Event Consumer with JSON Value Replacement
 
-A C# console application that consumes events from RabbitMQ, stores them in memory, and provides **JSON value replacement with JSONPath syntax** for data masking and templating.
+A C# console application that consumes events from RabbitMQ, stores them in memory, provides **JSON value replacement with JSONPath syntax** for data masking and templating and generates Jmeter Testplans with the consumed events as post-payload
 
 ## 🎯 Key Features
 
-- ✅ **JSON Value Replacement using JSONPath syntax** (e.g., `user.profile.email={email}`)
-- ✅ **Configurable replacement rules with placeholders**
-- ✅ **Support for nested objects and array elements** (e.g., `items[0].price={price}`)
-- ✅ **Data masking for sensitive information** (PII protection)
 - ✅ Connects to RabbitMQ server
 - ✅ Consumes messages from a configurable queue
 - ✅ Stores consumed events in memory for analysis
+- ✅ JSON Value Replacement using JSONPath syntax (e.g., `user.profile.email={email}`)
+- ✅ Support for nested objects and array elements (e.g., `items[0].price={price}`)
+- ✅ Generate JMeter template for testing
 - ✅ Interactive commands for viewing statistics and history
 - ✅ Real-time event counting and performance metrics
 - ✅ Pretty-prints JSON messages with proper formatting
@@ -19,7 +18,6 @@ A C# console application that consumes events from RabbitMQ, stores them in memo
 - ✅ Proper error handling and connection management
 - ✅ Manual acknowledgment support
 - ✅ Includes a test event publisher
-- ✅ Memory-efficient event storage (keeps last 1000 events)
 
 ## 🔄 JSON Replacement Examples
 
@@ -64,6 +62,7 @@ Edit `appsettings.json` to configure both RabbitMQ connection and JSON replaceme
 ```json
 {
   "RabbitMq": {
+    "Enabled": true,
     "HostName": "localhost",
     "Port": 5672,
     "Username": "guest",
@@ -168,207 +167,26 @@ dotnet run publish
 
 This will publish several test events to the queue, which the consumer can then process and apply replacements.
 
-## Example Output
+## JMX File Generation Feature
 
-### Event Display with Replacements
-```
-📨 [#1] [2024-01-15 10:30:45.123] Event Received:
-   Exchange: (default)
-   Routing Key: events_queue
-   Delivery Tag: 1
-   Message Size: 156 bytes
-   🔄 JSON Replacements Applied: 2
-      • UserId → {user_id}
-      • Email → {email}
-   Original Content:
-     {
-       "EventType": "UserRegistered",
-       "UserId": 123,
-       "Email": "user@example.com",
-       "Timestamp": "2024-01-15T10:30:45.123Z"
-     }
-   Processed Content:
-     {
-       "EventType": "UserRegistered",
-       "UserId": "{user_id}",
-       "Email": "{email}",
-       "Timestamp": "2024-01-15T10:30:45.123Z"
-     }
-   Properties:
-     Content-Type: application/json
-     Message-Id: 12345678-1234-5678-9abc-123456789012
-   ────────────────────────────────────────────────────────────
-```
+The JMX file generation feature createa JMeter test plans from captured RabbitMQ events. This enhancement allows for automatic generation of HTTP test steps based on real event data.
 
-### Statistics Display (Press 'S')
-```
-📊 Event Statistics:
-   Total Events Consumed: 25
-   Successful: 24
-   Failed: 1
-   JSON Events: 20
-   Text Events: 5
-   Events with Replacements: 18
-   First Event: 2024-01-15 10:30:45.123
-   Last Event: 2024-01-15 10:32:15.456
-   Average Rate: 0.34 events/second
-   ────────────────────────────────────────────────────────────
-```
+### 1. Event-Driven Test Generation
+- **Automatic Test Step Creation**: Each captured event becomes a separate HTTP test step
+- **Payload Integration**: Event messages (original or processed) are XML-escaped and embedded as request payloads
+- **Dynamic Test Names**: Test steps are automatically named with event sequence and timestamp
 
-### Replacement Rules Display (Press 'R')
-```
-🔄 JSON Replacement Rules:
-   Status: ✅ Enabled
-   Show Original: ✅ Yes
-   Show Processed: ✅ Yes
+### 2. Template-Based Architecture
+- **Main Template**: Uses `JMeterTemplate.jmx` as the base structure, add this file in the same directory as the executable app. Use jmx-Parameters to fit your needs (e.g. server-url, generated Ids)
+- **Test Step Template**: Uses `Teststep.jmx` for individual HTTP request steps, add this file to fit your needs
+- **Placeholder Replacement**:
+  - `<!--#Teststeps#-->` in `JMeterTemplate.jmx` is replaced with all generated test steps
+  - `<!--#payload#-->` in `Teststep.jmx` is replaced with XML-escaped event content
 
-   Rules:
-   1. ✅ UserId → {user_id}
-      Description: Replace user ID with placeholder
-   2. ✅ Email → {email}
-      Description: Replace email with placeholder
-   3. ❌ user.profile.email → {profile_email}
-      Description: Example: nested object path
-   4. ❌ items[0].price → {first_item_price}
-      Description: Example: array element path
-
-   Applied in Session: 18 of 25 events
-   ────────────────────────────────────────────────────────────
-```
-
-### Event History with Replacement Indicators (Press 'H')
-```
-📚 Event History:
-   #21 ✅🔄 [10:32:10.123] JSON - 156 bytes
-      Preview: {"EventType":"UserRegistered","UserId":123,"Email":"user@example.com"}
-      Replacements: 2 applied
-   #22 ✅ [10:32:11.234] TEXT - 25 bytes
-      Preview: Simple string message
-   #23 ✅🔄 [10:32:12.345] JSON - 89 bytes
-      Preview: {"OrderId":456,"Amount":99.99}
-      Replacements: 1 applied
-   ────────────────────────────────────────────────────────────
-```
-
-## Use Cases
-
-### 1. **Data Masking for Privacy Compliance**
-```json
-{
-  "JsonPath": "customer.personalInfo.ssn",
-  "Placeholder": "{masked_ssn}",
-  "Description": "Mask SSN for privacy compliance"
-}
-```
-
-### 2. **Template Generation**
-```json
-{
-  "JsonPath": "order.customerId",
-  "Placeholder": "{customer_id}",
-  "Description": "Create order template with customer placeholder"
-}
-```
-
-### 3. **Environment-specific Value Replacement**
-```json
-{
-  "JsonPath": "config.databaseUrl",
-  "Placeholder": "{db_connection}",
-  "Description": "Replace database URL with environment variable"
-}
-```
-
-### 4. **Testing Data Anonymization**
-```json
-{
-  "JsonPath": "user.email",
-  "Placeholder": "{test_email}",
-  "Description": "Replace real emails with test placeholders"
-}
-```
-
-### JMeter Template Generation (Press 'J')
-
-The application includes a built-in JMeter template generator that creates ready-to-use load testing configurations:
-
-```
-🚀 JMeter Template Generator:
-
-✅ JMeter template generated successfully!
-   File: Generated_JMeter_Test_2025-07-12_10-45-30.jmx
-   Size: 15626 bytes
-
-📝 Template Features:
-   • OAuth authentication with Keycloak
-   • Parameterized server configuration
-   • Test data variables (FallId, PatientId, etc.)
-   • HTTP samplers for API testing
-   • JSON path assertions
-   • Response validation
-
-🔧 Usage:
-   1. Open Generated_JMeter_Test_*.jmx in Apache JMeter
-   2. Configure the User Defined Variables:
-      - Server: Target server hostname
-      - Protocol: http or https
-      - Port: Server port number
-      - IdpServer: Keycloak server hostname
-      - OAuthUsername/OAuthPassword: Test credentials
-   3. Add your specific HTTP requests in the placeholder section
-   4. Run the test plan
-
-💡 Tips:
-   • Use JMeter variables like ${FallId} for dynamic data
-   • Configure thread groups for load testing
-   • Add listeners for result visualization
-   • Use CSV Data Set Config for external test data
-────────────────────────────────────────────────────────────
-```
-
-#### JMeter Template Features
-
-- **OAuth 2.0 Authentication**: Pre-configured Keycloak integration
-- **Parameterized Configuration**: Variables for easy environment switching
-- **Dynamic Test Data**: Random generation of test IDs and values
-- **HTTP Samplers**: Basic API request structure
-- **Response Assertions**: JSON path validation examples
-- **Modular Design**: Include controllers for reusable components
-
-The generated template provides a solid foundation for API load testing with proper authentication and data handling.
-
-## Event Storage
-
-The application stores each consumed event as a `ConsumedEvent` object containing:
-
-- **Original Message** - The untouched message content
-- **Processed Message** - Message with JSON replacements applied
-- **Applied Replacements** - List of which rules were applied
-- **Replacement Status** - Whether any replacements occurred
-- **Standard Event Data** - Timestamp, routing info, headers, etc.
-
-## Error Handling
-
-- **JSON Parsing Errors**: Invalid JSON won't crash the replacement process
-- **Invalid JSONPath**: Malformed paths are skipped with logging
-- **Rule Processing**: Failed rules don't affect other rules or message processing
-- **Original Data Preservation**: Original messages are always retained
-
-## Performance
-
-- **Memory Efficient**: Only stores processed messages when replacements are applied
-- **Thread Safe**: Concurrent processing of replacement rules
-- **Fast JSONPath**: Simple dot-notation parser for quick path resolution
-- **Rule Optimization**: Disabled rules are skipped during processing
-
-## Architecture
-
-- `Program.cs` - Main consumer with replacement integration
-- `JsonReplacementService.cs` - Core replacement logic and JSONPath parser
-- `JsonReplacementConfig.cs` - Configuration models for replacement rules
-- `ConsumedEvent.cs` - Extended event model with replacement data
-- `TestEventPublisher.cs` - Test publisher with sample JSON events
-- `appsettings.json` - Configuration with replacement rules
+### 3. Smart Payload Selection
+- **Processed Messages First**: If JSON replacements were applied, uses the processed message
+- **Fallback to Original**: If no processing occurred, uses the original event message
+- **XML Escaping**: All content is properly XML-escaped to ensure valid JMX structure
 
 ## License
 
@@ -386,14 +204,5 @@ dotnet test
 # Run with detailed output
 dotnet test --logger "console;verbosity=detailed"
 ```
-
-### Test Coverage
-
-- **30 Unit Tests** covering all public methods
-- **JsonReplacementService** - Core functionality with 27 tests
-- **Configuration Classes** - 3 tests for config models
-- **Edge Cases** - Invalid JSON, malformed paths, array bounds
-- **Performance** - Deep nesting and large JSON handling
-- **Multiple Scenarios** - All supported JSONPath patterns
 
 See `RabbitMqEventConsumer.Tests/README.md` for detailed test documentation.
