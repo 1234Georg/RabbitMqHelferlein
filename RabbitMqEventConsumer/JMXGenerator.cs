@@ -129,9 +129,13 @@ public static class JMXGenerator
                 
                 // Replace the payload placeholder in the test step template
                 var testStepContent = teststepTemplate.Replace("<!--#payload#-->", xmlEscapedPayload);
-                
+
+                string? eventName = null;
+                if (!eventData.Headers.TryGetValue("MT-MessageType", out eventName))
+                    eventData.Headers.TryGetValue("MT-Fault-MessageType", out eventName);
+
                 // Optionally customize the test name with event information
-                var testName = $"Event_{i + 1}_{eventData.Timestamp:HHmmss}";
+                var testName = $"Event {eventName?.Replace("urn:message:", "")?.Split('.', ':').Last()}";
                 
                 // Replace test name if the template contains a specific pattern
                 testStepContent = testStepContent.Replace("[mtec] Patient anlegen", $"[Generated] {testName}");
