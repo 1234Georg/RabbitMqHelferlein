@@ -86,14 +86,11 @@ The expected value after replacement is
 ```
 ---
 
-### Bug 1.0.3: Fix the warnings
-**Status:** ⏳ **Pending**
+### Bug 1.0.4: Fix the warnings  
+**Status:** ✅ **Completed**
 
 **Acceptance Criteria:**
 - all warnings are fixed
 - there is a build error when there is a warning
-
-**Hints**
-- Ask human when not clear how to fix it
 
 ---
