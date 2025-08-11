@@ -2,7 +2,7 @@ namespace RabbitMqEventConsumer;
 
 public static class JMXGenerator
 {
-    public static void GenerateJMeterTemplate(List<ConsumedEvent> events, object eventsLock)
+    public static void GenerateJMeterTemplate(List<ConsumedEvent> events, object eventsLock, PostUrlsConfig? postUrlsConfig = null)
     {
         Console.WriteLine();
         Console.WriteLine("🚀 JMeter Template Generator:");
@@ -57,7 +57,7 @@ public static class JMXGenerator
                 Console.WriteLine($"   Found {eventsToProcess.Count} captured events");
                 
                 // Generate test steps from captured events
-                var generatedTestSteps = GenerateTestStepsFromEvents(eventsToProcess, teststepTemplate);
+                var generatedTestSteps = GenerateTestStepsFromEvents(eventsToProcess, teststepTemplate, postUrlsConfig);
                 
                 // Replace the placeholder in the main template
                 var finalContent = templateContent.Replace("<!--#Teststeps#-->", generatedTestSteps);
@@ -109,7 +109,7 @@ public static class JMXGenerator
         Console.WriteLine();
     }
 
-    private static string GenerateTestStepsFromEvents(List<ConsumedEvent> events, string teststepTemplate)
+    private static string GenerateTestStepsFromEvents(List<ConsumedEvent> events, string teststepTemplate, PostUrlsConfig? postUrlsConfig)
     {
         var testSteps = new List<string>();
         
@@ -130,14 +130,53 @@ public static class JMXGenerator
                 // Replace the payload placeholder in the test step template
                 var testStepContent = teststepTemplate.Replace("<!--#payload#-->", xmlEscapedPayload);
 
+                // Extract event name from MT-MessageType header
                 string? eventName = null;
-                if (!eventData.Headers.TryGetValue("MT-MessageType", out eventName))
-                    eventData.Headers.TryGetValue("MT-Fault-MessageType", out eventName);
+                string? fullMessageType = null;
+                if (eventData.Headers.TryGetValue("MT-MessageType", out fullMessageType) ||
+                    eventData.Headers.TryGetValue("MT-Fault-MessageType", out fullMessageType))
+                {
+                    // Extract event name after the ':'
+                    var colonIndex = fullMessageType.LastIndexOf(':');
+                    eventName = colonIndex >= 0 ? fullMessageType.Substring(colonIndex + 1) : fullMessageType;
+                }
 
-                // Optionally customize the test name with event information
-                var testName = $"Event {eventName?.Replace("urn:message:", "")?.Split('.', ':').Last()}";
-                
-                // Replace test name if the template contains a specific pattern
+                // Look up URL for this event name
+                string? eventUrl = null;
+                if (!string.IsNullOrEmpty(eventName) && postUrlsConfig?.PostUrls != null)
+                {
+                    var urlMapping = postUrlsConfig.PostUrls.FirstOrDefault(u => u.EventName.Equals(eventName, StringComparison.OrdinalIgnoreCase));
+                    eventUrl = urlMapping?.Url;
+                    
+                    // If no configuration found, add it to the list with empty URL
+                    if (urlMapping == null)
+                    {
+                        postUrlsConfig.PostUrls.Add(new PostUrlMapping { EventName = eventName, Url = "" });
+                        Console.WriteLine($"⚠️  Added new event '{eventName}' to configuration with empty URL");
+                    }
+                }
+
+                // Replace HTTPSampler.path if URL is configured
+                if (!string.IsNullOrEmpty(eventUrl) && testStepContent.Contains("name=\"HTTPSampler.path\""))
+                {
+                    // Find and replace the HTTPSampler.path value
+                    var pathPattern = @"<stringProp name=""HTTPSampler\.path"">[^<]*</stringProp>";
+                    var replacement = $"<stringProp name=\"HTTPSampler.path\">{eventUrl}</stringProp>";
+                    testStepContent = System.Text.RegularExpressions.Regex.Replace(testStepContent, pathPattern, replacement);
+                }
+
+                // Customize the test name with event information
+                string testName;
+                if (!string.IsNullOrEmpty(eventName))
+                {
+                    testName = $"Event {eventName}";
+                }
+                else
+                {
+                    // Use timestamp-based naming as fallback
+                    var timeString = eventData.Timestamp.ToString("HHmmss");
+                    testName = $"Event_{i + 1}_{timeString}";
+                }
                 testStepContent = testStepContent.Replace("[mtec] Patient anlegen", $"[Generated] {testName}");
                 
                 testSteps.Add(testStepContent);

@@ -198,6 +198,114 @@ public class JMXGeneratorBasicTests : IDisposable
         Assert.Equal(3, testStepCount);
     }
 
+    [Fact]
+    public void JMXGenerator_WithEventAndUrlMapping_ReplacesHttpSamplerPath()
+    {
+        // Arrange
+        var eventWithHeader = new ConsumedEvent
+        {
+            Timestamp = new DateTime(2024, 1, 15, 14, 30, 45),
+            Message = """{"patientId": "12345", "action": "update"}""",
+            HasReplacements = false,
+            IsJson = true,
+            MessageSize = 42,
+            Headers = new Dictionary<string, string>
+            {
+                { "MT-MessageType", "Hospital.Events:PatientUpdatedEvent" }
+            }
+        };
+
+        var postUrlsConfig = new PostUrlsConfig
+        {
+            PostUrls = new List<PostUrlMapping>
+            {
+                new PostUrlMapping 
+                { 
+                    EventName = "PatientUpdatedEvent", 
+                    Url = "/api/patients/update" 
+                }
+            }
+        };
+
+        var events = new List<ConsumedEvent> { eventWithHeader };
+        var lockObject = new object();
+        CreateTestTemplates();
+        SetCurrentDirectory();
+
+        // Act
+        JMXGenerator.GenerateJMeterTemplate(events, lockObject, postUrlsConfig);
+
+        // Assert
+        var generatedFiles = Directory.GetFiles(_testOutputDirectory, "Generated_JMeter_Test_*.jmx");
+        var content = File.ReadAllText(generatedFiles[0]);
+
+        // Verify URL replacement occurred
+        Assert.Contains("<stringProp name=\"HTTPSampler.path\">/api/patients/update</stringProp>", content);
+        Assert.DoesNotContain("<stringProp name=\"HTTPSampler.path\">/default/path</stringProp>", content);
+        
+        // Verify event name is used in test name
+        Assert.Contains("[Generated] Event PatientUpdatedEvent", content);
+        
+        // Verify it's valid XML
+        var doc = new XmlDocument();
+        var exception = Record.Exception(() => doc.LoadXml(content));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void JMXGenerator_WithEventNoUrlMapping_AddsEventToConfigWithEmptyUrl()
+    {
+        // Arrange
+        var eventWithUnmappedHeader = new ConsumedEvent
+        {
+            Timestamp = new DateTime(2024, 1, 15, 15, 45, 30),
+            Message = """{"orderId": "98765", "status": "completed"}""",
+            HasReplacements = false,
+            IsJson = true,
+            MessageSize = 38,
+            Headers = new Dictionary<string, string>
+            {
+                { "MT-MessageType", "Orders.Domain:OrderCompletedEvent" }
+            }
+        };
+
+        var postUrlsConfig = new PostUrlsConfig
+        {
+            PostUrls = new List<PostUrlMapping>
+            {
+                new PostUrlMapping 
+                { 
+                    EventName = "ExistingEvent", 
+                    Url = "/api/existing" 
+                }
+            }
+        };
+
+        var events = new List<ConsumedEvent> { eventWithUnmappedHeader };
+        var lockObject = new object();
+        CreateTestTemplates();
+        SetCurrentDirectory();
+
+        // Act
+        JMXGenerator.GenerateJMeterTemplate(events, lockObject, postUrlsConfig);
+
+        // Assert
+        var generatedFiles = Directory.GetFiles(_testOutputDirectory, "Generated_JMeter_Test_*.jmx");
+        var content = File.ReadAllText(generatedFiles[0]);
+
+        // Verify original path remains since no URL mapping exists
+        Assert.Contains("<stringProp name=\"HTTPSampler.path\">/default/path</stringProp>", content);
+        
+        // Verify event name is used in test name
+        Assert.Contains("[Generated] Event OrderCompletedEvent", content);
+        
+        // Verify new event was added to configuration with empty URL
+        var newMapping = postUrlsConfig.PostUrls.FirstOrDefault(u => u.EventName == "OrderCompletedEvent");
+        Assert.NotNull(newMapping);
+        Assert.Equal("", newMapping.Url);
+        Assert.Equal(2, postUrlsConfig.PostUrls.Count); // Original + new one
+    }
+
     #region Helper Methods
 
     private void CreateTestTemplates()
@@ -237,6 +345,7 @@ public class JMXGeneratorBasicTests : IDisposable
             <Teststep>
               <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="[mtec] Patient anlegen" enabled="true">
                 <stringProp name="HTTPSampler.domain">${Server}</stringProp>
+                <stringProp name="HTTPSampler.path">/default/path</stringProp>
                 <stringProp name="HTTPSampler.method">POST</stringProp>
                 <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
                 <elementProp name="HTTPsampler.Arguments" elementType="Arguments">

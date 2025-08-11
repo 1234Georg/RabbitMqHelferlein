@@ -10,4 +10,4 @@ Software Developer use this tool.
 
 # Constraints
 
-* the app is a console app, build with .net 8 and c#
+* the app is a console app, build with .net 9 and c#

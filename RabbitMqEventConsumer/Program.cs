@@ -11,6 +11,7 @@ public class Program
     private static readonly object EventsLock = new();
     private static JsonReplacementService? _replacementService;
     private static JsonReplacementConfig? _jsonReplacementConfig;
+    private static PostUrlsConfig? _postUrlsConfig;
 
     static async Task Main(string[] args)
     {
@@ -44,6 +45,9 @@ public class Program
 
         _jsonReplacementConfig = new JsonReplacementConfig();
         configuration.GetSection("JsonReplacement").Bind(_jsonReplacementConfig);
+        
+        _postUrlsConfig = new PostUrlsConfig();
+        configuration.GetSection("PostUrls").Bind(_postUrlsConfig.PostUrls);
         
         _replacementService = new JsonReplacementService(_jsonReplacementConfig);
 
@@ -268,7 +272,7 @@ public class Program
                     ShowReplacementRules();
                     break;
                 case 'J':
-                    JMXGenerator.GenerateJMeterTemplate(ConsumedEvents, EventsLock);
+                    JMXGenerator.GenerateJMeterTemplate(ConsumedEvents, EventsLock, _postUrlsConfig);
                     break;
                 case '\r': // Enter key
                 case '\n':

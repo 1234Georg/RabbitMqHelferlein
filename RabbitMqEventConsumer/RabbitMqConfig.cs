@@ -30,3 +30,14 @@ public class JsonReplacementConfig
     public bool ShowProcessedMessage { get; set; } = true;
     public List<JsonReplacementRule> Rules { get; set; } = new();
 }
+
+public class PostUrlMapping
+{
+    public string EventName { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
+}
+
+public class PostUrlsConfig
+{
+    public List<PostUrlMapping> PostUrls { get; set; } = new();
+}

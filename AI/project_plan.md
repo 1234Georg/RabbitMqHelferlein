@@ -11,7 +11,7 @@
 ## Phase 1.0: Finish jMeter-Testfile-Generation
 
 ### Story 1.0.1: Set proper 'post-path' in jMeter-File
-**Status:** ⏳ **Pending**
+**Status:** ✅ **Completed**
 
 **As a developer, I want that each step in the generated jMeter-File uses the appropirate url to post data**
 
@@ -24,10 +24,8 @@
 - Configuration possibility in app-settings to map event-name to url
 
 **Testing:**
-- Manual: Panel resizing works smoothly
-- Manual: Layout adapts correctly to different window sizes
-- Manual: Panel collapse/expand maintains state
-- Visual test: Layout feels professional and familiar
+- Unittest: replacement of url
+- Unittest: missing configuration and no replacement but adding empty config entry
 
 ---
 
