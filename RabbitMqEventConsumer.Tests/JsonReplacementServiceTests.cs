@@ -459,4 +459,40 @@ public class JsonReplacementServiceTests
         processedJson.RootElement[1].GetProperty("email").GetString().Should().Be("second@example.com");
         result.appliedRules.Should().Contain("[0].email → [EMAIL]");
     }
+
+    [Fact]
+    public void ProcessMessage_WithMultipleArrayElementsMatchingPath_ReplacesAllOccurrences()
+    {
+        // Arrange - Use exact specification from Bug 1.0.3 acceptance criteria
+        var config = new JsonReplacementConfig
+        {
+            EnableReplacements = true,
+            Rules = new List<JsonReplacementRule>
+            {
+                new JsonReplacementRule 
+                { 
+                    JsonPath = "person.employedAt", 
+                    Placeholder = "{employed_at_id}", 
+                    Enabled = true,
+                    Description = "Replace employer ID with placeholder"
+                }
+            }
+        };
+
+        var service = new JsonReplacementService(config);
+        // Use exact JSON structure from acceptance criteria
+        var json = """[{"person": {"id": "123", "employedAt": "456"}}, {"person": {"id": "124", "employedAt": "456"}}]""";
+
+        // Act
+        var result = service.ProcessMessage(json, true);
+
+        // Assert - Single rule should find and replace multiple occurrences
+        result.appliedRules.Should().HaveCount(2, "because the single JsonPath rule should match both array elements");
+        result.appliedRules.Should().Contain("person.employedAt → {employed_at_id}");
+        
+        // Verify both occurrences are replaced by parsing the result
+        using var jsonDoc = JsonDocument.Parse(result.processedMessage);
+        jsonDoc.RootElement[0].GetProperty("person").GetProperty("employedAt").GetString().Should().Be("{employed_at_id}");
+        jsonDoc.RootElement[1].GetProperty("person").GetProperty("employedAt").GetString().Should().Be("{employed_at_id}");
+    }
 }

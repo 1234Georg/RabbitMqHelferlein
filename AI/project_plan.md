@@ -38,7 +38,7 @@
 ---
 
 ### Bug 1.0.3: Add a unitest to verify that multiple json-path replacements happen corretly
-**Status:** ⏳ **Pending**
+**Status:** ✅ **Completed**
 
 **Acceptance Criteria:**
 - Unittest that 

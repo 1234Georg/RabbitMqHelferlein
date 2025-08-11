@@ -5,6 +5,21 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Code Analysis Rules for Clean Code -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors />
+    
+    <!-- Enable additional code quality checks -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>Recommended</AnalysisMode>
+    
+    <!-- Rules to prevent obsolete code patterns -->
+    <!-- CA1041: Provide ObsoleteAttribute message -->
+    <!-- CA1051: Do not declare visible instance fields -->
+    <!-- IDE0051: Remove unused private members -->
+    <!-- IDE0052: Remove unread private members -->
   </PropertyGroup>
 
   <ItemGroup>

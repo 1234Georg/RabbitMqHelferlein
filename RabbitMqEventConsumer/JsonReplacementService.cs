@@ -28,7 +28,8 @@ public class JsonReplacementService
 
             foreach (var rule in _config.Rules.Where(r => r.Enabled))
             {
-                if (ApplyReplacementRule(jsonNode, rule))
+                var replacementCount = ApplyReplacementRuleToAll(jsonNode, rule);
+                for (int i = 0; i < replacementCount; i++)
                 {
                     appliedRules.Add($"{rule.JsonPath} → {rule.Placeholder}");
                 }
@@ -44,17 +45,18 @@ public class JsonReplacementService
         }
     }
 
-    private bool ApplyReplacementRule(JsonNode jsonNode, JsonReplacementRule rule)
+
+    private int ApplyReplacementRuleToAll(JsonNode jsonNode, JsonReplacementRule rule)
     {
         try
         {
             var pathParts = ParseJsonPath(rule.JsonPath);
-            return ReplaceValueAtPath(jsonNode, pathParts, rule.Placeholder);
+            return ReplaceAllMatchingPaths(jsonNode, pathParts, rule.Placeholder);
         }
         catch (Exception)
         {
             // Skip this rule if path is invalid
-            return false;
+            return 0;
         }
     }
 
@@ -127,6 +129,62 @@ public class JsonReplacementService
         }
         
         return false;
+    }
+
+    private int ReplaceAllMatchingPaths(JsonNode node, string[] pathParts, string placeholder)
+    {
+        var replacementCount = 0;
+        
+        // First, try to replace at the current node level
+        if (ReplaceValueAtPath(node, pathParts, placeholder))
+        {
+            replacementCount++;
+        }
+        
+        // Then recursively search in arrays and objects for additional matches
+        replacementCount += SearchAndReplaceRecursive(node, pathParts, placeholder);
+        
+        return replacementCount;
+    }
+    
+    private int SearchAndReplaceRecursive(JsonNode node, string[] pathParts, string placeholder)
+    {
+        var replacementCount = 0;
+        
+        switch (node)
+        {
+            case JsonArray array:
+                // Search each array element for matching paths
+                for (int i = 0; i < array.Count; i++)
+                {
+                    if (array[i] != null)
+                    {
+                        // Try to match the path pattern starting from this array element
+                        if (ReplaceValueAtPath(array[i]!, pathParts, placeholder))
+                        {
+                            replacementCount++;
+                        }
+                        
+                        // Continue recursively searching within this element
+                        replacementCount += SearchAndReplaceRecursive(array[i]!, pathParts, placeholder);
+                    }
+                }
+                break;
+                
+            case JsonObject obj:
+                // Search each object property for matching paths
+                foreach (var kvp in obj.ToArray()) // ToArray to avoid modification during iteration
+                {
+                    if (kvp.Value != null)
+                    {
+                        // Continue recursively searching within this property
+                        replacementCount += SearchAndReplaceRecursive(kvp.Value, pathParts, placeholder);
+                    }
+                }
+                break;
+        }
+        
+        return replacementCount;
     }
 
     public static List<string> ExtractJsonPaths(string jsonMessage)

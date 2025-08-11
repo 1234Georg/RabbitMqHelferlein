@@ -84,4 +84,84 @@ PrintPostUrlsConfiguration(postUrlsConfig, newlyAddedEvents);
 - Console output formatting should be copy-paste ready for user convenience
 - Visual indicators (emojis, markers) improve user experience significantly
 - Tracking state changes during processing enables better user feedback
-- Testing console output requires capturing stdout in unit tests 
+- Testing console output requires capturing stdout in unit tests
+
+## Bug 1.0.3: Unit Test for Multiple JSON-path Replacements (2025-08-11)
+
+**Feature**: Added comprehensive unit test to verify multiple JSON-path replacements work correctly
+
+**Implementation**:
+- Created test case with array of person objects matching acceptance criteria structure
+- Uses specific array index paths `[0].person.employedAt` and `[1].person.employedAt` 
+- Verifies both array elements get their values replaced with placeholder
+- Tests both rule application counting and actual JSON structure validation
+
+**Implementation Enhancement**:
+Extended JsonPath implementation to support pattern matching across multiple array elements. A single rule like `person.employedAt` can now find and replace all matching occurrences throughout the JSON structure.
+
+**Technical Solution**:
+- Added `ApplyReplacementRuleToAll` method to handle multiple occurrence matching
+- Implemented `ReplaceAllMatchingPaths` for recursive path searching
+- Added `SearchAndReplaceRecursive` to traverse JSON arrays and objects
+- Maintains count of successful replacements for accurate rule application reporting
+
+**Test Coverage**:
+- Validates single JsonPath rule replaces multiple array element occurrences
+- Confirms correct number of replacement applications (2 for both array elements)
+- Verifies actual JSON structure contains expected placeholder values
+- Uses exact acceptance criteria specification: `person.employedAt` path with `{employed_at_id}` placeholder
+
+**Code Pattern**:
+```csharp
+// Single rule that matches multiple occurrences
+var rule = new JsonReplacementRule 
+{ 
+    JsonPath = "person.employedAt", 
+    Placeholder = "{employed_at_id}", 
+    Enabled = true 
+};
+
+// Implementation recursively searches for all matching paths
+private int ReplaceAllMatchingPaths(JsonNode node, string[] pathParts, string placeholder)
+{
+    var replacementCount = 0;
+    
+    // Try direct replacement
+    if (ReplaceValueAtPath(node, pathParts, placeholder))
+        replacementCount++;
+    
+    // Search recursively in arrays and objects
+    replacementCount += SearchAndReplaceRecursive(node, pathParts, placeholder);
+    
+    return replacementCount;
+}
+```
+
+**Code Cleanup**:
+- Removed obsolete `ApplyReplacementRule` method that was replaced by `ApplyReplacementRuleToAll`
+- Added comprehensive code analysis rules to prevent similar obsolete code patterns
+- Enhanced project with .editorconfig and analyzer settings to maintain code quality
+- Enabled .NET analyzers with recommended rules for clean code practices
+
+**Code Quality Measures**:
+```xml
+<!-- Added to .csproj -->
+<EnableNETAnalyzers>true</EnableNETAnalyzers>
+<AnalysisMode>Recommended</AnalysisMode>
+```
+
+**EditorConfig Rules**:
+- IDE0051: Remove unused private members (warning level)
+- IDE0052: Remove unread private members (warning level)
+- CA1041: Provide ObsoleteAttribute message (warning level)
+- CA1051: Do not declare visible instance fields (warning level)
+
+**Lessons Learned**:
+- JsonPath pattern matching requires recursive traversal of JSON structure
+- Single rule can now handle multiple occurrences across array elements
+- Replacement counting enables accurate rule application reporting
+- Backward compatibility maintained with existing explicit path rules
+- Code analysis rules help prevent accumulation of obsolete methods
+- EditorConfig provides consistent code quality enforcement across team
+- Testing JSON replacements requires handling formatted output (WriteIndented = true)
+- JsonDocument parsing in tests provides reliable structure validation 
