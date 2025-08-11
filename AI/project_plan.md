@@ -36,3 +36,52 @@
 - log-output on console with the proper format implemented in Story 1.0.1, so that the user can copy it directly to it's app-settings file
 
 ---
+
+### Bug 1.0.3: Add a unitest to verify that multiple json-path replacements happen corretly
+**Status:** ⏳ **Pending**
+
+**Acceptance Criteria:**
+- Unittest that 
+
+example event
+```
+{
+    [
+        "person": {
+            "id": "123",
+            "employedAt": "456"
+        },
+        "person": {
+            "id": "124",
+            "employedAt": "456"
+        }
+    ]
+}
+```
+use the following replacement rules
+```
+"JsonReplacement": {
+    "Rules": [
+      {
+        "JsonPath": "person.empoyedAt",
+        "Placeholder": "{employed_at_id}",
+        "Enabled": true,
+        "Description": "Replace employer ID with placeholder"
+      }
+```
+The expected value after replacement is
+```
+{
+    [
+        "person": {
+            "id": "123",
+            "employedAt": "{employed_at_id}"
+        },
+        "person": {
+            "id": "124",
+            "employedAt": "{employed_at_id}"
+        }
+    ]
+}
+```
+---
