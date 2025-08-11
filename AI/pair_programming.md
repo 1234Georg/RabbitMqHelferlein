@@ -16,7 +16,7 @@ This document outlines our pair programming workflow. It ensures consistent proc
 **Claude's Actions:**
 - After brief plan is approved by human, create a comprehensive implementation plan
 - Build a detailed todo list for the story implementation using TodoWrite tool
-- Review `AI/CLAUDE.md` for project-specific commands and architecture notes
+- Review `CLAUDE.md` for project-specific commands and architecture notes
 - Update todo list to mark story as "in_progress"
 - Read any relevant existing files to understand current state
 
