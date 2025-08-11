@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     
     <!-- Code Analysis Rules for Clean Code -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
-    <WarningsNotAsErrors />
+    <WarningsNotAsErrors></WarningsNotAsErrors>
     
     <!-- Enable additional code quality checks -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>

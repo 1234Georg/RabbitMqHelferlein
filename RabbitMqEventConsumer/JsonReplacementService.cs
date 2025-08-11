@@ -46,7 +46,7 @@ public class JsonReplacementService
     }
 
 
-    private int ApplyReplacementRuleToAll(JsonNode jsonNode, JsonReplacementRule rule)
+    private static int ApplyReplacementRuleToAll(JsonNode jsonNode, JsonReplacementRule rule)
     {
         try
         {
@@ -60,7 +60,7 @@ public class JsonReplacementService
         }
     }
 
-    private string[] ParseJsonPath(string jsonPath)
+    private static string[] ParseJsonPath(string jsonPath)
     {
         // Simple JSONPath parser - handles dot notation like "user.profile.email"
         // and array notation like "users[0].name"
@@ -80,7 +80,7 @@ public class JsonReplacementService
             .ToArray();
     }
 
-    private bool ReplaceValueAtPath(JsonNode node, string[] pathParts, string placeholder)
+    private static bool ReplaceValueAtPath(JsonNode node, string[] pathParts, string placeholder)
     {
         if (pathParts.Length == 0 || node == null) return false;
 
@@ -131,7 +131,7 @@ public class JsonReplacementService
         return false;
     }
 
-    private int ReplaceAllMatchingPaths(JsonNode node, string[] pathParts, string placeholder)
+    private static int ReplaceAllMatchingPaths(JsonNode node, string[] pathParts, string placeholder)
     {
         var replacementCount = 0;
         
@@ -147,7 +147,7 @@ public class JsonReplacementService
         return replacementCount;
     }
     
-    private int SearchAndReplaceRecursive(JsonNode node, string[] pathParts, string placeholder)
+    private static int SearchAndReplaceRecursive(JsonNode node, string[] pathParts, string placeholder)
     {
         var replacementCount = 0;
         

@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace RabbitMqEventConsumer;
 
 public static class JMXGenerator
@@ -36,7 +38,7 @@ public static class JMXGenerator
 
             var templateContent = File.ReadAllText(templatePath);
             var teststepTemplate = File.ReadAllText(teststepPath);
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture);
             var outputFileName = $"Generated_JMeter_Test_{timestamp}.jmx";
             
             Console.WriteLine($"📊 Processing captured events...");
@@ -47,7 +49,7 @@ public static class JMXGenerator
                 eventsToProcess = events.ToList();
             }
             
-            if (!eventsToProcess.Any())
+            if (eventsToProcess.Count == 0)
             {
                 Console.WriteLine($"⚠️  No captured events found. Using template without test steps.");
                 // Just copy the template with empty test steps
@@ -99,7 +101,7 @@ public static class JMXGenerator
             Console.WriteLine($"   • Use CSV Data Set Config for external test data");
             
             // Print PostUrls configuration if we have any events or newly added configurations
-            if (postUrlsConfig != null && postUrlsConfig.PostUrls.Any())
+            if (postUrlsConfig != null && postUrlsConfig.PostUrls.Count > 0)
             {
                 PrintPostUrlsConfiguration(postUrlsConfig, newlyAddedEvents);
             }
@@ -183,7 +185,7 @@ public static class JMXGenerator
                 else
                 {
                     // Use timestamp-based naming as fallback
-                    var timeString = eventData.Timestamp.ToString("HHmmss");
+                    var timeString = eventData.Timestamp.ToString("HHmmss", CultureInfo.InvariantCulture);
                     testName = $"Event_{i + 1}_{timeString}";
                 }
                 testStepContent = testStepContent.Replace("[mtec] Patient anlegen", $"[Generated] {testName}");
@@ -206,7 +208,7 @@ public static class JMXGenerator
         Console.WriteLine("📋 PostUrls Configuration:");
         Console.WriteLine();
         
-        if (newlyAddedEvents.Any())
+        if (newlyAddedEvents.Count > 0)
         {
             Console.WriteLine($"   🆕 {newlyAddedEvents.Count} new event(s) were added with empty URLs:");
             foreach (var eventName in newlyAddedEvents)
@@ -236,7 +238,7 @@ public static class JMXGenerator
         Console.WriteLine("   ]");
         Console.WriteLine();
         
-        if (newlyAddedEvents.Any())
+        if (newlyAddedEvents.Count > 0)
         {
             Console.WriteLine($"   💡 Please update the empty URLs for the newly added events in your appsettings.json");
         }

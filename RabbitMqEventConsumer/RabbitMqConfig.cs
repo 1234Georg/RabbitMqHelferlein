@@ -9,10 +9,10 @@ public class RabbitMqConfig
     public string Password { get; set; } = "guest";
     public string QueueName { get; set; } = "events_queue";
     public string VirtualHost { get; set; } = "/";
-    public bool AutoAck { get; set; } = false;
+    public bool AutoAck { get; set; }
     public bool Durable { get; set; } = true;
-    public bool Exclusive { get; set; } = false;
-    public bool AutoDelete { get; set; } = false;
+    public bool Exclusive { get; set; }
+    public bool AutoDelete { get; set; }
 }
 
 public class JsonReplacementRule
@@ -25,7 +25,7 @@ public class JsonReplacementRule
 
 public class JsonReplacementConfig
 {
-    public bool EnableReplacements { get; set; } = false;
+    public bool EnableReplacements { get; set; }
     public bool ShowOriginalMessage { get; set; } = true;
     public bool ShowProcessedMessage { get; set; } = true;
     public List<JsonReplacementRule> Rules { get; set; } = new();

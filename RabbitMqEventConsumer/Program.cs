@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -9,6 +11,7 @@ public class Program
 {
     private static readonly List<ConsumedEvent> ConsumedEvents = new();
     private static readonly object EventsLock = new();
+    private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
     private static JsonReplacementService? _replacementService;
     private static JsonReplacementConfig? _jsonReplacementConfig;
     private static PostUrlsConfig? _postUrlsConfig;
@@ -124,7 +127,7 @@ public class Program
                     if (consumedEvent.IsJson && _replacementService != null)
                     {
                         var (processedMessage, appliedRules) = _replacementService.ProcessMessage(message, consumedEvent.IsJson);
-                        if (appliedRules.Any())
+                        if (appliedRules.Count > 0)
                         {
                             consumedEvent.ProcessedMessage = processedMessage;
                             consumedEvent.HasReplacements = true;
@@ -168,7 +171,7 @@ public class Program
                         // Limit stored events to prevent memory issues (keep last 1000)
                         if (ConsumedEvents.Count > 10000)
                         {
-                            throw new Exception("more that 1000 Events");
+                            throw new InvalidOperationException("Event limit exceeded: more than 10000 events stored");
                         }
                     }
 
@@ -193,7 +196,7 @@ public class Program
                         
                         if (ConsumedEvents.Count > 10000)
                         {
-                            throw new Exception("more that 1000 Events");
+                            throw new InvalidOperationException("Event limit exceeded: more than 10000 events stored");
                         }
                     }
 
@@ -257,7 +260,7 @@ public class Program
         {
             var keyInfo = Console.ReadKey(true);
             
-            switch (char.ToUpper(keyInfo.KeyChar))
+            switch (char.ToUpper(keyInfo.KeyChar, CultureInfo.InvariantCulture))
             {
                 case 'S':
                     ShowStatistics();
@@ -285,7 +288,7 @@ public class Program
 
     private static void DisplayEvent(ConsumedEvent eventData)
     {
-        var timestamp = eventData.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        var timestamp = eventData.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
         var eventNumber = ConsumedEvents.Count;
         
         Console.WriteLine($"📨 [#{eventNumber}] [{timestamp}] Event Received:");
@@ -334,7 +337,7 @@ public class Program
         if (eventData.MessageTimestamp.HasValue)
             Console.WriteLine($"     Timestamp: {eventData.MessageTimestamp.Value}");
         
-        if (eventData.Headers.Any())
+        if (eventData.Headers.Count > 0)
         {
             Console.WriteLine($"     Headers:");
             foreach (var header in eventData.Headers)
@@ -355,7 +358,7 @@ public class Program
             {
                 var formatted = System.Text.Json.JsonSerializer.Serialize(
                     System.Text.Json.JsonSerializer.Deserialize<object>(content),
-                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    JsonOptions);
                 Console.WriteLine($"{indent}{formatted.Replace("\n", $"\n{indent}")}");
             }
             catch
@@ -387,7 +390,7 @@ public class Program
         Console.WriteLine($"   Show Processed: {(_jsonReplacementConfig.ShowProcessedMessage ? "✅ Yes" : "❌ No")}");
         Console.WriteLine();
         
-        if (!_jsonReplacementConfig.Rules.Any())
+        if (_jsonReplacementConfig.Rules.Count == 0)
         {
             Console.WriteLine("   No rules configured.");
         }
@@ -426,7 +429,7 @@ public class Program
             Console.WriteLine("📊 Event Statistics:");
             Console.WriteLine($"   Total Events Consumed: {ConsumedEvents.Count}");
             
-            if (ConsumedEvents.Any())
+            if (ConsumedEvents.Count > 0)
             {
                 var successful = ConsumedEvents.Count(e => e.ProcessedSuccessfully);
                 var failed = ConsumedEvents.Count(e => !e.ProcessedSuccessfully);
@@ -459,7 +462,7 @@ public class Program
                     .GroupBy(e => e.ContentType)
                     .ToDictionary(g => g.Key!, g => g.Count());
                 
-                if (contentTypes.Any())
+                if (contentTypes.Count > 0)
                 {
                     Console.WriteLine($"   Content Types:");
                     foreach (var ct in contentTypes.OrderByDescending(x => x.Value))
@@ -481,7 +484,7 @@ public class Program
             Console.WriteLine();
             Console.WriteLine("📚 Event History:");
             
-            if (!ConsumedEvents.Any())
+            if (ConsumedEvents.Count == 0)
             {
                 Console.WriteLine("   No events consumed yet.");
                 Console.WriteLine($"   {new string('─', 60)}");
@@ -556,7 +559,7 @@ public class Program
         
         var paths = JsonReplacementService.ExtractJsonPaths(jsonContent);
         
-        if (!paths.Any())
+        if (paths.Count == 0)
         {
             Console.WriteLine("No JSON paths found. Make sure the input is valid JSON.");
             return;
@@ -587,7 +590,7 @@ public class Program
             return false;
             
         content = content.Trim();
-        return (content.StartsWith("{") && content.EndsWith("}")) || 
-               (content.StartsWith("[") && content.EndsWith("]"));
+        return (content.StartsWith('{') && content.EndsWith('}')) || 
+               (content.StartsWith('[') && content.EndsWith(']'));
     }
 }

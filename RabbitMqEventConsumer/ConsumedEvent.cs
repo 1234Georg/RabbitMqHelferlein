@@ -8,7 +8,7 @@ public class ConsumedEvent
     public ulong DeliveryTag { get; set; }
     public string Message { get; set; } = string.Empty;
     public string? ProcessedMessage { get; set; }
-    public bool HasReplacements { get; set; } = false;
+    public bool HasReplacements { get; set; }
     public int MessageSize { get; set; }
     public string? ContentType { get; set; }
     public string? MessageId { get; set; }

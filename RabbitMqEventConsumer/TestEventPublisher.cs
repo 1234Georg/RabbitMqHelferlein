@@ -69,7 +69,7 @@ public static class TestEventPublisher
                     ContentType = "application/json",
                     MessageId = Guid.NewGuid().ToString(),
                     Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds()),
-                    Headers = new Dictionary<string, object>
+                    Headers = new Dictionary<string, object?>
                     {
                         ["source"] = Encoding.UTF8.GetBytes("test-publisher"),
                         ["version"] = Encoding.UTF8.GetBytes("1.0"),
@@ -98,7 +98,7 @@ public static class TestEventPublisher
                     ContentType = "text/plain",
                     MessageId = Guid.NewGuid().ToString(),
                     Timestamp = new AmqpTimestamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds()),
-                    Headers = new Dictionary<string, object>
+                    Headers = new Dictionary<string, object?>
                     {
                         ["source"] = Encoding.UTF8.GetBytes("test-publisher"),
                         ["version"] = Encoding.UTF8.GetBytes("1.0"),
