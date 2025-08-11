@@ -8,6 +8,8 @@ public static class JMXGenerator
         Console.WriteLine("🚀 JMeter Template Generator:");
         Console.WriteLine();
         
+        var newlyAddedEvents = new List<string>();
+        
         try
         {
             // Check if template files exist
@@ -57,7 +59,7 @@ public static class JMXGenerator
                 Console.WriteLine($"   Found {eventsToProcess.Count} captured events");
                 
                 // Generate test steps from captured events
-                var generatedTestSteps = GenerateTestStepsFromEvents(eventsToProcess, teststepTemplate, postUrlsConfig);
+                var generatedTestSteps = GenerateTestStepsFromEvents(eventsToProcess, teststepTemplate, postUrlsConfig, newlyAddedEvents);
                 
                 // Replace the placeholder in the main template
                 var finalContent = templateContent.Replace("<!--#Teststeps#-->", generatedTestSteps);
@@ -95,6 +97,12 @@ public static class JMXGenerator
             Console.WriteLine($"   • Configure thread groups for load testing");
             Console.WriteLine($"   • Add listeners for result visualization");
             Console.WriteLine($"   • Use CSV Data Set Config for external test data");
+            
+            // Print PostUrls configuration if we have any events or newly added configurations
+            if (postUrlsConfig != null && postUrlsConfig.PostUrls.Any())
+            {
+                PrintPostUrlsConfiguration(postUrlsConfig, newlyAddedEvents);
+            }
         }
         catch (Exception ex)
         {
@@ -109,7 +117,7 @@ public static class JMXGenerator
         Console.WriteLine();
     }
 
-    private static string GenerateTestStepsFromEvents(List<ConsumedEvent> events, string teststepTemplate, PostUrlsConfig? postUrlsConfig)
+    private static string GenerateTestStepsFromEvents(List<ConsumedEvent> events, string teststepTemplate, PostUrlsConfig? postUrlsConfig, List<string> newlyAddedEvents)
     {
         var testSteps = new List<string>();
         
@@ -152,6 +160,7 @@ public static class JMXGenerator
                     if (urlMapping == null)
                     {
                         postUrlsConfig.PostUrls.Add(new PostUrlMapping { EventName = eventName, Url = "" });
+                        newlyAddedEvents.Add(eventName);
                         Console.WriteLine($"⚠️  Added new event '{eventName}' to configuration with empty URL");
                     }
                 }
@@ -189,6 +198,48 @@ public static class JMXGenerator
         }
         
         return string.Join("\n", testSteps);
+    }
+
+    private static void PrintPostUrlsConfiguration(PostUrlsConfig postUrlsConfig, List<string> newlyAddedEvents)
+    {
+        Console.WriteLine();
+        Console.WriteLine("📋 PostUrls Configuration:");
+        Console.WriteLine();
+        
+        if (newlyAddedEvents.Any())
+        {
+            Console.WriteLine($"   🆕 {newlyAddedEvents.Count} new event(s) were added with empty URLs:");
+            foreach (var eventName in newlyAddedEvents)
+            {
+                Console.WriteLine($"      • {eventName}");
+            }
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine("   📄 Copy this configuration to your appsettings.json:");
+        Console.WriteLine();
+        Console.WriteLine("   \"PostUrls\": [");
+        
+        for (int i = 0; i < postUrlsConfig.PostUrls.Count; i++)
+        {
+            var mapping = postUrlsConfig.PostUrls[i];
+            var isNewlyAdded = newlyAddedEvents.Contains(mapping.EventName);
+            var marker = isNewlyAdded ? " // 🆕 NEW - Please configure URL" : "";
+            var comma = i < postUrlsConfig.PostUrls.Count - 1 ? "," : "";
+            
+            Console.WriteLine($"     {{");
+            Console.WriteLine($"       \"EventName\": \"{mapping.EventName}\",");
+            Console.WriteLine($"       \"Url\": \"{mapping.Url}\"{marker}");
+            Console.WriteLine($"     }}{comma}");
+        }
+        
+        Console.WriteLine("   ]");
+        Console.WriteLine();
+        
+        if (newlyAddedEvents.Any())
+        {
+            Console.WriteLine($"   💡 Please update the empty URLs for the newly added events in your appsettings.json");
+        }
     }
 
     private static string XmlEscapeString(string input)

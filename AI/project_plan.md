@@ -29,3 +29,10 @@
 
 ---
 
+### Bug 1.0.2: Print the new generated configuration for the 'post-path' (see Story 1.0.1) to console, so that the user can copy it directly to the configuration file.
+**Status:** ✅ **Completed**
+
+**Acceptance Criteria:**
+- log-output on console with the proper format implemented in Story 1.0.1, so that the user can copy it directly to it's app-settings file
+
+---

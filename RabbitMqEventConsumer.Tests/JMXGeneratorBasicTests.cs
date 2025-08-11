@@ -306,6 +306,71 @@ public class JMXGeneratorBasicTests : IDisposable
         Assert.Equal(2, postUrlsConfig.PostUrls.Count); // Original + new one
     }
 
+    [Fact]
+    public void JMXGenerator_WithNewEvents_PrintsPostUrlsConfigurationToConsole()
+    {
+        // Arrange
+        var eventWithNewHeader = new ConsumedEvent
+        {
+            Timestamp = new DateTime(2024, 1, 15, 16, 20, 15),
+            Message = """{"notificationId": "54321", "type": "email"}""",
+            HasReplacements = false,
+            IsJson = true,
+            MessageSize = 45,
+            Headers = new Dictionary<string, string>
+            {
+                { "MT-MessageType", "Notifications.Service:EmailSentEvent" }
+            }
+        };
+
+        var postUrlsConfig = new PostUrlsConfig
+        {
+            PostUrls = new List<PostUrlMapping>
+            {
+                new PostUrlMapping 
+                { 
+                    EventName = "ExistingEvent", 
+                    Url = "/api/existing" 
+                }
+            }
+        };
+
+        var events = new List<ConsumedEvent> { eventWithNewHeader };
+        var lockObject = new object();
+        CreateTestTemplates();
+        SetCurrentDirectory();
+
+        // Capture console output
+        using var consoleOutput = new StringWriter();
+        Console.SetOut(consoleOutput);
+
+        // Act
+        JMXGenerator.GenerateJMeterTemplate(events, lockObject, postUrlsConfig);
+
+        // Restore console
+        Console.SetOut(new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true });
+
+        // Assert
+        var output = consoleOutput.ToString();
+        
+        // Verify configuration section is printed
+        Assert.Contains("📋 PostUrls Configuration:", output);
+        Assert.Contains("📄 Copy this configuration to your appsettings.json:", output);
+        Assert.Contains("\"PostUrls\": [", output);
+        
+        // Verify both events are in the output
+        Assert.Contains("\"EventName\": \"ExistingEvent\"", output);
+        Assert.Contains("\"EventName\": \"EmailSentEvent\"", output);
+        
+        // Verify new event is marked
+        Assert.Contains("🆕 NEW - Please configure URL", output);
+        Assert.Contains("🆕 1 new event(s) were added", output);
+        
+        // Verify proper JSON formatting
+        Assert.Contains("\"Url\": \"/api/existing\"", output);
+        Assert.Contains("\"Url\": \"\"", output); // Empty URL for new event
+    }
+
     #region Helper Methods
 
     private void CreateTestTemplates()
