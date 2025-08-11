@@ -16,6 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Always use the TodoWrite tool to track story progress
 - Follow the exact human verification format from pair_programming.md
 - Update technical_considerations.md with lessons learned after each story
+- Write a summary with imported design decisions and lessons learned after each story
 
 ## Development Commands
 
