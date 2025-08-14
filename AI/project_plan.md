@@ -13,7 +13,7 @@
 ### Story 1.0.1: Set proper 'post-path' in jMeter-File
 **Status:** ✅ **Completed**
 
-**As a developer, I want that each step in the generated jMeter-File uses the appropirate url to post data**
+**As a developer, I want that each step in the generated jMeter-File uses the appropriate url to post data**
 
 **Acceptance Criteria:**
 - the event-name is part of the property from rabbitmq 'MT-MessageType', the event-name comes after the ':'
@@ -37,11 +37,11 @@
 
 ---
 
-### Bug 1.0.3: Add a unitest to verify that multiple json-path replacements happen corretly
+### Bug 1.0.3: Add a unit test to verify that multiple json-path replacements happen correctly
 **Status:** ✅ **Completed**
 
 **Acceptance Criteria:**
-- Unittest that 
+- Unit test that 
 
 example event
 ```
@@ -63,7 +63,7 @@ use the following replacement rules
 "JsonReplacement": {
     "Rules": [
       {
-        "JsonPath": "person.empoyedAt",
+        "JsonPath": "person.employedAt",
         "Placeholder": "{employed_at_id}",
         "Enabled": true,
         "Description": "Replace employer ID with placeholder"

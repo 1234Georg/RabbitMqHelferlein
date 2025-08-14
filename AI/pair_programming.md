@@ -16,7 +16,8 @@ This document outlines our pair programming workflow. It ensures consistent proc
 **Claude's Actions:**
 - After brief plan is approved by human, create a comprehensive implementation plan
 - Build a detailed todo list for the story implementation using TodoWrite tool
-- Review `CLAUDE.md` for project-specific commands and architecture notes
+- Review `CLAUDE.md` for project-specific commands
+- Review architecture notes in `AI/architecture`
 - Update todo list to mark story as "in_progress"
 - Read any relevant existing files to understand current state
 
@@ -33,6 +34,7 @@ This document outlines our pair programming workflow. It ensures consistent proc
 
 ### 5. Human Verification Request
 **Claude's Actions:**
+- Mark story as 🧪 **Testing** in the `AI/project_plan` markdown file
 - Summarize what was implemented
 - List what should be visible/testable in the app
 - **Provide specific testing steps for the human**
@@ -73,6 +75,7 @@ This document outlines our pair programming workflow. It ensures consistent proc
 - Update todo list to completed
 - Update progress tracking in the `AI/project_plan` markdown file
 - Update technical_considerations.md with lessons learned
+- Update `AI/architecture.md`
 
 ## Documentation Updates
 

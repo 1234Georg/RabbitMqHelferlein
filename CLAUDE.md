@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Before starting any work, read these files in order:**
 
-1. **`AI/project_overview.md`** - The overall goal of this project, targer user and constaints
+1. **`AI/project_overview.md`** - The overall goal of this project, target user and constraints
 1. **`AI/pair_programming.md`** - Our workflow process for story-driven development
 1. **`AI/project_plan.md`** - Current progress and next story to work on  
 1. **`AI/technical_considerations.md`** - Lessons learned and implementation decisions

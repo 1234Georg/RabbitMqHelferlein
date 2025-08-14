@@ -12,6 +12,8 @@ todo by Claude
 
 ### High-Level Architecture
 
+[Hint: add architecture and corresponding directory structure]
+
 todo by Claude
 
 ## Detailed Design
